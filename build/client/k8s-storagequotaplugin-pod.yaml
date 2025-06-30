@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-quota-plugin-client
+spec:
+  containers:
+    - name: storage-quota-plugin-client
+      image: 10.12.10.149:80/gemini-platform/gemini-sqi-driver-client:latest
+      command: ['sh', '-c', '/usr/client']
+      volumeMounts:
+        - name: uds-socket
+          mountPath: /var/run/storagequotaplugin/
+  volumes:
+    - name: uds-socket
+      hostPath:
+        path: /etc/stoargequotaplugin/
