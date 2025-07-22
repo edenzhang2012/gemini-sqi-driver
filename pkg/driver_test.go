@@ -8,7 +8,11 @@ import (
 )
 
 func TestGetPluginCapabilities(t *testing.T) {
-	service := NewStorageQuotaPluginService()
+	service, err := NewStorageQuotaPluginService()
+	if err != nil {
+		t.Errorf("NewStorageQuotaPluginService failed with %v", err)
+		return
+	}
 	res, err := service.GetPluginCapabilities(t.Context(), &pb.GetPluginCapabilitiesRequest{})
 	if err != nil {
 		t.Errorf("GetPluginCapabilities failed with %v", err)
@@ -76,7 +80,11 @@ func TestQuotaCRUD(t *testing.T) {
 		{Req{pb.QuotaTarget_PATH, "test-1:/tmp/a/parent/child12", uint64(1024 * 1024 * 1024)}, Expected{true, false, uint64(800 * 1024 * 1024)}}, //child12
 	}
 
-	service := NewStorageQuotaPluginService()
+	service, err := NewStorageQuotaPluginService()
+	if err != nil {
+		t.Errorf("NewStorageQuotaPluginService failed with %v", err)
+		return
+	}
 
 	//test create
 	for _, test := range testCases {
@@ -105,24 +113,24 @@ func TestQuotaCRUD(t *testing.T) {
 					t.Errorf("GetQuota failed with %v", err)
 				} else {
 					//status == ok or no status means all good
-					if valve, ok := getRes.Entries.Info["status"]; ok {
+					if valve, ok := getRes.Entry.Info["status"]; ok {
 						if valve != "ok" {
 							time.Sleep(500 * time.Millisecond)
 							continue
 						}
 					}
-					if getRes.Entries.SizeQuotaEnable != test.expected.SizeQuotaEnable {
-						t.Errorf("getRes.Entries.SizeQuotaEnable is %v, expact %v", getRes.Entries.SizeQuotaEnable, test.expected.SizeQuotaEnable)
+					if getRes.Entry.SizeQuotaEnable != test.expected.SizeQuotaEnable {
+						t.Errorf("getRes.Entries.SizeQuotaEnable is %v, expact %v", getRes.Entry.SizeQuotaEnable, test.expected.SizeQuotaEnable)
 					}
-					if getRes.Entries.InodeQuotaEnable != test.expected.InodeQuotaEnable {
-						t.Errorf("getRes.Entries.InodeQuotaEnable is %v, expact %v", getRes.Entries.InodeQuotaEnable, test.expected.InodeQuotaEnable)
+					if getRes.Entry.InodeQuotaEnable != test.expected.InodeQuotaEnable {
+						t.Errorf("getRes.Entries.InodeQuotaEnable is %v, expact %v", getRes.Entry.InodeQuotaEnable, test.expected.InodeQuotaEnable)
 					}
-					if getRes.Entries.SizeBytes != test.expected.SizeBytes {
-						t.Errorf("getRes.Entries.SizeBytes is %d, expact %d", getRes.Entries.SizeBytes, test.expected.SizeBytes)
+					if getRes.Entry.SizeBytes != test.expected.SizeBytes {
+						t.Errorf("getRes.Entries.SizeBytes is %d, expact %d", getRes.Entry.SizeBytes, test.expected.SizeBytes)
 					}
 
-					t.Logf("getRes %v", getRes.Entries)
-					t.Logf("used %d", getRes.Entries.UsedBytes)
+					t.Logf("getRes %v", getRes.Entry)
+					t.Logf("used %d", getRes.Entry.UsedBytes)
 					break
 				}
 			}
@@ -133,7 +141,10 @@ func TestQuotaCRUD(t *testing.T) {
 	listRes, err := service.ListQuotas(t.Context(), &pb.ListQuotasRequest{
 		Limit:         5,
 		ContinueToken: "",
-		FilterScope:   pb.QuotaTarget_PATH,
+		Target: &pb.QuotaTarget{
+			Scope: pb.QuotaTarget_PATH,
+			Id:    "",
+		},
 	})
 	if err != nil {
 		t.Errorf("ListQuotas failed with %v", err)
@@ -178,7 +189,10 @@ func TestQuotaCRUD(t *testing.T) {
 	listRes, err = service.ListQuotas(t.Context(), &pb.ListQuotasRequest{
 		Limit:         5,
 		ContinueToken: "",
-		FilterScope:   pb.QuotaTarget_PATH,
+		Target: &pb.QuotaTarget{
+			Scope: pb.QuotaTarget_PATH,
+			Id:    "",
+		},
 	})
 	if err != nil {
 		t.Errorf("ListQuotas failed with %v", err)

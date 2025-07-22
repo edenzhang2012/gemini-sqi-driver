@@ -1,0 +1,6 @@
+storagequotaplugin:
+  AppName : "storagequotaplugin"
+  Ip : "192.168.1.18"
+  Port : 5006
+  Username : "admin"
+  Password : "xxxxx"
