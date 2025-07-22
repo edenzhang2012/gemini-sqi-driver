@@ -1,0 +1,9 @@
+storage-quota-driver:
+  AppName: storage-quota-driver
+  StorageName: "xxxxx"
+  Ip: "localhost"
+  Port: 65535
+  UserName: "yyyyy"
+  Password: "zzzzz"
+  FilesystemName: "aaaaa"
+  RootPath: "bbbbb"

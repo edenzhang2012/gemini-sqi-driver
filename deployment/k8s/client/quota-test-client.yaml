@@ -9,7 +9,7 @@ spec:
       command: ['sh', '-c', '/usr/client']
       volumeMounts:
         - name: uds-socket
-          mountPath: /var/run/storagequotaplugin/
+          mountPath: /var/run/storage-quota-plugin/
   volumes:
     - name: uds-socket
       hostPath:

@@ -1,16 +1,16 @@
 package main
 
 import (
-	"log"
+	"flag"
 	"net"
 	"net/http"
 	"os"
 
 	_ "net/http/pprof"
 
-	pkg "github.com/edenzhang2012/geminisqidriver"
+	"github.com/edenzhang2012/geminisqidriver/pkg"
+	"github.com/edenzhang2012/geminisqidriver/tools"
 	"github.com/edenzhang2012/storagequotainterface/sqi/pb"
-	"github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc"
 )
@@ -20,29 +20,32 @@ var (
 	BuildNo   string
 	BuildTime string
 
-	logger *logrus.Logger
+	configFile = flag.String("config", "/usr/config/config.yaml", "The path of the configFile")
 )
 
 const (
-	AppName = "storagequotaplugin"
+	AppName = "storage-quota-plugin"
 )
 
 func init() {
-	//log config
-	level := logrus.InfoLevel
-	levelEnv := os.Getenv("LOG_LEVEL")
-	if levelEnv != "" {
-		var err error
-		level, err = logrus.ParseLevel(levelEnv)
-		if err != nil {
-			log.Fatalf("Invalid log level: %s", levelEnv)
-		}
+	//log Init
+	tools.LogInit()
+
+	flag.Parse()
+	if *configFile == "" {
+		tools.Logger.Fatal("config is not setted!")
 	}
 
-	logger = logrus.New()
-	logger.SetOutput(os.Stdout)
-	logger.SetLevel(level)
-	logger.SetReportCaller(true)
+	tools.ParseConfig(AppName, *configFile)
+	tools.Logger.Infof("init config:%+v\n", *tools.Config)
+
+	//get server info from config
+	if tools.Config.Ip == "" || tools.Config.Ip == "None" ||
+		tools.Config.Port == 0 ||
+		tools.Config.Username == "" || tools.Config.Username == "None" ||
+		tools.Config.Password == "" || tools.Config.Password == "None" {
+		tools.Logger.Fatalf("quota server Ip、Port、Username、Password must be set")
+	}
 }
 
 func main() {
@@ -51,22 +54,26 @@ func main() {
 		http.ListenAndServe("0.0.0.0:8899", nil)
 	}()
 
-	//delete socket file
-	os.Remove("/var/run/" + AppName + "/" + AppName + ".sock")
+	socketFile := "/usr/socket/" + AppName + ".sock"
+	//delete old socket file
+	os.Remove(socketFile)
 
 	//start gRPC server
-	lis, err := net.Listen("unix", "/var/run/"+AppName+"/"+AppName+".sock")
-
+	lis, err := net.Listen("unix", socketFile)
 	if err != nil {
-		logger.Fatalf("failed to listen: %v", err)
+		tools.Logger.Fatalf("failed to listen: %v", err)
 	}
 
-	sqp := pkg.NewStorageQuotaPluginService()
+	sqp, err := pkg.NewStorageQuotaPluginService()
+	if err != nil {
+		tools.Logger.Errorf("NewStorageQuotaPluginService failed with %v", err)
+		return
+	}
 	opts := []grpc.ServerOption{}
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterQuotaServiceServer(grpcServer, sqp)
 
 	if err := grpcServer.Serve(lis); err != nil {
-		logger.Fatalf("grpc server err %v", err)
+		tools.Logger.Fatalf("grpc server err %v", err)
 	}
 }

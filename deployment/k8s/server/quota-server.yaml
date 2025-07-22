@@ -26,7 +26,8 @@
         containers:
         - name: storage-quota-plugin
           image: 10.12.10.149:80/gemini-platform/gemini-sqi-driver:latest
-          command: ['sh', '-c', "/usr/main"]
+          command: [ "/bin/sh" ]
+          args: [ "-c", "sh /usr/start.sh" ]
           resources:
             limits:
               memory: 200Mi

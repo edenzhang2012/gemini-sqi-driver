@@ -7,16 +7,16 @@ import (
 
 	"github.com/edenzhang2012/storagequotainterface/sqi/pb"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
-	AppName = "storagequotaplugin"
+	AppName = "storage-quota-plugin"
 )
 
 func main() {
+	socketFile := "/usr/socket/" + AppName + ".sock"
 	//grpc client初始化
-	conn, err := grpc.NewClient("unix:/var/run/"+AppName+"/"+AppName+".sock", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient("unix:" + socketFile)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -125,25 +125,25 @@ func main() {
 						log.Fatalf("GetQuota failed with %v", err)
 					} else {
 						//status == ok or no status means all good
-						if valve, ok := getRes.Entries.Info["status"]; ok {
+						if valve, ok := getRes.Entry.Info["status"]; ok {
 							if valve != "ok" {
 								time.Sleep(500 * time.Millisecond)
 								cancel()
 								continue
 							}
 						}
-						if getRes.Entries.SizeQuotaEnable != test.expected.SizeQuotaEnable {
-							log.Fatalf("getRes.Entries.SizeQuotaEnable is %v, expact %v", getRes.Entries.SizeQuotaEnable, test.expected.SizeQuotaEnable)
+						if getRes.Entry.SizeQuotaEnable != test.expected.SizeQuotaEnable {
+							log.Fatalf("getRes.Entry.SizeQuotaEnable is %v, expact %v", getRes.Entry.SizeQuotaEnable, test.expected.SizeQuotaEnable)
 						}
-						if getRes.Entries.InodeQuotaEnable != test.expected.InodeQuotaEnable {
-							log.Fatalf("getRes.Entries.InodeQuotaEnable is %v, expact %v", getRes.Entries.InodeQuotaEnable, test.expected.InodeQuotaEnable)
+						if getRes.Entry.InodeQuotaEnable != test.expected.InodeQuotaEnable {
+							log.Fatalf("getRes.Entry.InodeQuotaEnable is %v, expact %v", getRes.Entry.InodeQuotaEnable, test.expected.InodeQuotaEnable)
 						}
-						if getRes.Entries.SizeBytes != test.expected.SizeBytes {
-							log.Fatalf("getRes.Entries.SizeBytes is %d, expact %d", getRes.Entries.SizeBytes, test.expected.SizeBytes)
+						if getRes.Entry.SizeBytes != test.expected.SizeBytes {
+							log.Fatalf("getRes.Entry.SizeBytes is %d, expact %d", getRes.Entry.SizeBytes, test.expected.SizeBytes)
 						}
 
-						log.Printf("getRes %v", getRes.Entries)
-						log.Printf("used %d", getRes.Entries.UsedBytes)
+						log.Printf("getRes %v", getRes.Entry)
+						log.Printf("used %d", getRes.Entry.UsedBytes)
 						cancel()
 						break
 					}
@@ -156,7 +156,10 @@ func main() {
 		listRes, err := c.ListQuotas(ctx, &pb.ListQuotasRequest{
 			Limit:         5,
 			ContinueToken: "",
-			FilterScope:   pb.QuotaTarget_PATH,
+			Target: &pb.QuotaTarget{
+				Scope: pb.QuotaTarget_PATH,
+				Id:    "",
+			},
 		})
 		if err != nil {
 			log.Fatalf("ListQuotas failed with %v", err)
@@ -205,7 +208,10 @@ func main() {
 		listRes, err = c.ListQuotas(ctx, &pb.ListQuotasRequest{
 			Limit:         5,
 			ContinueToken: "",
-			FilterScope:   pb.QuotaTarget_PATH,
+			Target: &pb.QuotaTarget{
+				Scope: pb.QuotaTarget_PATH,
+				Id:    "",
+			},
 		})
 		if err != nil {
 			log.Fatalf("ListQuotas failed with %v", err)

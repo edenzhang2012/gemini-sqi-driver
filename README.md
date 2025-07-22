@@ -26,12 +26,12 @@ type QuotaServiceClient interface {
         需要提前安装好golang和docker
     - 编译
         项目根目录执行`make`
-- 将生成的镜像推送到gemini环境，使用build/server/k8s-storagequotaplugin-daemonset.yaml部署到环境中
+- 将生成的镜像推送到gemini环境，使用build/server/k8s-storage-quota-plugin-daemonset.yaml部署到环境中
 - 修改Gemini配置，重新部署相应的组件即可使用配额能力
 # test
 本项目同时也提供了sqi driver的client用于测试driver的功能是否正常，并且该测试不需要Gemini平台。使用方法如下:
 - 执行`make`时会同时生成sqi driver server和client的二进制文件和docker镜像
 - 将server和client镜像推送到k8s的镜像仓库中
-- 使用`build/server/k8s-storagequotaplugin-daemonset.yaml`部署server
-- 使用`build/client/k8s-storagequotaplugin-pod.yaml`部署client
+- 使用`build/server/k8s-storage-quota-plugin-daemonset.yaml`部署server
+- 使用`build/client/k8s-storage-quota-plugin-pod.yaml`部署client
 - 观察client的日志，查看driver的功能是否正常
